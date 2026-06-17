@@ -508,7 +508,7 @@ fun HomeScreen(viewModel: DongViewModel, onViewGroupDetail: () -> Unit) {
                     IconButton(
                         onClick = {
                             try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/bahrambaba"))
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Bahram-PAB"))
                                 context.startActivity(intent)
                             } catch (e: Exception) {
                                 e.printStackTrace()
@@ -530,7 +530,7 @@ fun HomeScreen(viewModel: DongViewModel, onViewGroupDetail: () -> Unit) {
                     IconButton(
                         onClick = {
                             try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://linkedin.com/in/bahrambaba"))
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.linkedin.com/in/bahram-pouralibaba-1a992239"))
                                 context.startActivity(intent)
                             } catch (e: Exception) {
                                 e.printStackTrace()
