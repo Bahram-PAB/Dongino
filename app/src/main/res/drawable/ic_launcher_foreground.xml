@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Group of Users - User 1 (Top Center) -->
+    <!-- Head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,22 A6,6 0,1,0 54,34 A6,6 0,1,0 54,22 Z" />
+    <!-- Chest -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M42,42 C42,37 66,37 66,42 Z" />
+
+    <!-- User 2 (Bottom Left) -->
+    <!-- Head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,58 A6,6 0,1,0 34,70 A6,6 0,1,0 34,58 Z" />
+    <!-- Chest -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M22,78 C22,73 46,73 46,78 Z" />
+
+    <!-- User 3 (Bottom Right) -->
+    <!-- Head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,58 A6,6 0,1,0 74,70 A6,6 0,1,0 74,58 Z" />
+    <!-- Chest -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M62,78 C62,73 86,73 86,78 Z" />
+
+    <!-- Central Sharing Coin with Dividing Balance Accent -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M54,46 A10,10 0,1,0 54,66 A10,10 0,1,0 54,46 Z" />
+
+    <!-- Split Lines inside the central coin -->
+    <path
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,56 L54,48 M54,56 L47,60 M54,56 L61,60" />
+
+</vector>
