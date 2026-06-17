@@ -40,10 +40,10 @@ jobs:
             gradle wrapper
           fi
 
-      - name: Configure Gradle for CI (daemon mode for KSP)
+      - name: Configure Gradle for CI (out-of-process mode for KSP)
         run: |
-          # Change execution strategy from in-process to daemon to isolate classpath and prevent KSP IntelliJ openapi null pointer errors on CI
-          sed -i 's/kotlin.compiler.execution.strategy=in-process/kotlin.compiler.execution.strategy=daemon/g' gradle.properties
+          # Ensure execution strategy is out-of-process to completely isolate classloaders and avoid IntelliJ/ApplicationManager NPEs on CI
+          sed -i 's/kotlin.compiler.execution.strategy=daemon/kotlin.compiler.execution.strategy=out-of-process/g' gradle.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -52,4 +52,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Compile and Build Android Project
-        run: ./gradlew assembleDebug --no-configuration-cache
+        run: ./gradlew assembleDebug --no-daemon --no-configuration-cache
