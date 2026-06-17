@@ -480,6 +480,75 @@ fun HomeScreen(viewModel: DongViewModel, onViewGroupDetail: () -> Unit) {
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Footer with GitHub and LinkedIn Icons
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "طراحی و توسعه با ❤️ برای دُنگینو",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    val context = LocalContext.current
+                    
+                    // GitHub icon button
+                    IconButton(
+                        onClick = {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/bahrambaba"))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("github_footer_button")
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_github),
+                            contentDescription = "گیت‌هاب من",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // LinkedIn icon button
+                    IconButton(
+                        onClick = {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://linkedin.com/in/bahrambaba"))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("linkedin_footer_button")
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_linkedin),
+                            contentDescription = "لینکدین من",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
         }
 
         // Large Add Group FAB
@@ -536,7 +605,7 @@ fun WelcomeCard(groupCount: Int) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "درسا عزیز، به برنامه دُنگینو خوش آمدید!",
+                        text = "دوست عزیز، به برنامه دُنگینو خوش آمدید!",
                         fontWeight = FontWeight.Black,
                         fontSize = 17.sp,
                         color = Color.White
