@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -29,7 +31,29 @@ android {
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
+      val keystoreFile = file("${rootDir}/debug.keystore")
+      if (!keystoreFile.exists()) {
+        try {
+          val base64File = file("${rootDir}/debug.keystore.base64")
+          if (base64File.exists()) {
+            println("debug.keystore.base64 found. Restoring debug.keystore...")
+            val decoded = Base64.getDecoder().decode(base64File.readText().trim())
+            keystoreFile.writeBytes(decoded)
+          } else {
+            println("debug.keystore not found. Generating a new one using keytool...")
+            val pb = ProcessBuilder(
+              "keytool", "-genkey", "-v", "-keystore", keystoreFile.absolutePath,
+              "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android",
+              "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000",
+              "-dname", "CN=Android Debug,O=Android,C=US"
+            )
+            pb.inheritIO().start().waitFor()
+          }
+        } catch (e: Exception) {
+          e.printStackTrace()
+        }
+      }
+      storeFile = keystoreFile
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
