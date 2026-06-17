@@ -97,9 +97,98 @@ fun formatToman(amount: Long): String {
     return "${formatter.format(amount)} تومان"
 }
 
+fun parsePersianLong(str: String): Long? {
+    val englishDigits = str.map {
+        when (it) {
+            '۰' -> '0'
+            '۱' -> '1'
+            '۲' -> '2'
+            '۳' -> '3'
+            '۴' -> '4'
+            '۵' -> '5'
+            '۶' -> '6'
+            '۷' -> '7'
+            '۸' -> '8'
+            '۹' -> '9'
+            '٠' -> '0'
+            '١' -> '1'
+            '٢' -> '2'
+            '٣' -> '3'
+            '٤' -> '4'
+            '٥' -> '5'
+            '٦' -> '6'
+            '٧' -> '7'
+            '٨' -> '8'
+            '٩' -> '9'
+            else -> it
+        }
+    }.joinToString("")
+    return englishDigits.toLongOrNull()
+}
+
 fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("yyyy/MM/dd", Locale("fa", "IR"))
-    return sdf.format(Date(timestamp))
+    val cal = Calendar.getInstance()
+    cal.timeInMillis = timestamp
+    val gy = cal.get(Calendar.YEAR)
+    val gm = cal.get(Calendar.MONTH) + 1 // Calendar.MONTH is 0-indexed
+    val gd = cal.get(Calendar.DAY_OF_MONTH)
+
+    val jalali = gregorianToJalali(gy, gm, gd)
+    val jy = jalali[0]
+    val jm = jalali[1]
+    val jd = jalali[2]
+
+    val localeFa = Locale("fa", "IR")
+    val formatter = NumberFormat.getIntegerInstance(localeFa)
+    formatter.isGroupingUsed = false
+
+    val yStr = formatter.format(jy)
+    val mStr = if (jm < 10) "۰${formatter.format(jm)}" else formatter.format(jm)
+    val dStr = if (jd < 10) "۰${formatter.format(jd)}" else formatter.format(jd)
+
+    return "$yStr/$mStr/$dStr"
+}
+
+fun gregorianToJalali(gy: Int, gm: Int, gd: Int): IntArray {
+    val gDaysInMonth = intArrayOf(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    
+    val gy2 = gy - 1600
+    val gm2 = gm
+    val gd2 = gd
+
+    var gDayNo = 365 * gy2 + (gy2 + 3) / 4 - (gy2 + 99) / 100 + (gy2 + 399) / 400
+    for (i in 1 until gm2) {
+        gDayNo += gDaysInMonth[i]
+    }
+    if (gm2 > 2 && ((gy % 4 == 0 && gy % 100 != 0) || gy % 400 == 0)) {
+        gDayNo++
+    }
+    gDayNo += gd2 - 1
+
+    var jDayNo = gDayNo - 79
+    val jNp = jDayNo / 12053
+    jDayNo %= 12053
+
+    var jy = 979 + 33 * jNp + 4 * (jDayNo / 1461)
+    jDayNo %= 1461
+
+    if (jDayNo >= 366) {
+        jy += (jDayNo - 1) / 365
+        jDayNo = (jDayNo - 1) % 365
+    }
+
+    var jm = 0
+    val jDaysInMonth = intArrayOf(0, 31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29)
+    for (i in 1..12) {
+        if (jDayNo < jDaysInMonth[i]) {
+            jm = i
+            break
+        }
+        jDayNo -= jDaysInMonth[i]
+    }
+    val jd = jDayNo + 1
+
+    return intArrayOf(jy, jm, jd)
 }
 
 @Composable
@@ -2235,7 +2324,10 @@ fun AddEditExpenseDialog(
     onSave: (Long, String, Int, List<Int>, String, Long, Uri?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var amount by remember { mutableStateOf(editingExpense?.amount?.toString() ?: "") }
+    val initialAmount = editingExpense?.amount?.let { amt ->
+        java.text.DecimalFormat("#,###").format(amt)
+    } ?: ""
+    var amount by remember { mutableStateOf(initialAmount) }
     var description by remember { mutableStateOf(editingExpense?.description ?: "") }
     var category by remember { mutableStateOf(editingExpense?.category ?: "غذا") }
     var paidByMemberId by remember { mutableStateOf(editingExpense?.paidByMemberId ?: (if (members.isNotEmpty()) members.first().id else -1)) }
@@ -2288,7 +2380,16 @@ fun AddEditExpenseDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it },
+                    onValueChange = { input ->
+                        val digitOnly = input.filter { it.isDigit() || it == ',' || it == '٬' || it == '.' }
+                        val cleaned = digitOnly.replace(",", "").replace("٬", "").replace(".", "")
+                        val longVal = parsePersianLong(cleaned)
+                        if (longVal != null) {
+                            amount = java.text.DecimalFormat("#,###").format(longVal)
+                        } else if (cleaned.isEmpty()) {
+                            amount = ""
+                        }
+                    },
                     label = { Text("مبلغ هزینه به تومان (عدد)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier
@@ -2475,7 +2576,8 @@ fun AddEditExpenseDialog(
                     }
                     Button(
                         onClick = {
-                            val amt = amount.toLongOrNull() ?: 0L
+                            val cleanedAmount = amount.replace(",", "").replace("٬", "").replace(".", "")
+                            val amt = parsePersianLong(cleanedAmount) ?: 0L
                             if (amt <= 0 || description.isBlank() || paidByMemberId == -1) {
                                 return@Button
                             }
@@ -2536,7 +2638,16 @@ fun AddSettlementDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it },
+                    onValueChange = { input ->
+                        val digitOnly = input.filter { it.isDigit() || it == ',' || it == '٬' || it == '.' }
+                        val cleaned = digitOnly.replace(",", "").replace("٬", "").replace(".", "")
+                        val longVal = parsePersianLong(cleaned)
+                        if (longVal != null) {
+                            amount = java.text.DecimalFormat("#,###").format(longVal)
+                        } else if (cleaned.isEmpty()) {
+                            amount = ""
+                        }
+                    },
                     label = { Text("مبلغ تسویه شده به تومان") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier
@@ -2601,7 +2712,8 @@ fun AddSettlementDialog(
                     }
                     Button(
                         onClick = {
-                            val amt = amount.toLongOrNull() ?: 0L
+                            val cleanedAmount = amount.replace(",", "").replace("٬", "").replace(".", "")
+                            val amt = parsePersianLong(cleanedAmount) ?: 0L
                             if (amt <= 0 || fromMemberId == -1 || toMemberId == -1 || fromMemberId == toMemberId) {
                                 return@Button
                             }
