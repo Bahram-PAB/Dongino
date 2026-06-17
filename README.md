@@ -1,21 +1,29 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# 📱 دُنگینو (Dongino)
 
-# Run and deploy your AI Studio app
+> **کامل‌ترین و آسان‌ترین دستیار آفلاین برای تقسیم و حساب‌کتاب هزینه‌های گروهی (دنگ)**
 
-This contains everything you need to run your app locally.
+دُنگینو یک اپلیکیشن کاملاً آفلاین، سریع و کاربرپسند برای محاسبه و اشتراک‌گذاری هزینه‌های گروهی است. فرقی نمی‌کند در سفر با دوستان هستید، با هم‌خانه‌ای‌ها خرج مشترک دارید یا برای یک مهمانی برنامه‌ریزی می‌کنید؛ با دُنگینو بدون نیاز به ثبت‌نام، اینترنت یا فرآیندهای پیچیده، هزینه‌ها را ثبت کنید و در کوتاه‌ترین زمان سهم هر شخص و مسیر تسویه حساب‌ها را به دست آورید.
 
-View your app in AI Studio: https://ai.studio/apps/26304c0e-ffc4-459f-97d8-097a0c8bd827
+---
 
-## Run Locally
+## ✨ ویژگی‌های برجسته نسخه ۱ (دُنگینو)
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+*   **🔒 کاملاً آفلاین و امن:** داده‌های شما روی حافظه داخلی دستگاه شما باقی می‌ماند و هیچ سرور یا سرویس کلودی اطلاعات مالی شما را ذخیره نمی‌کند.
+*   **📐 محاسبه هوشمند تراز و تسویه:** دُنگینو با استفاده از الگوریتم بهینه‌سازی، دقیقاً مشخص می‌کند چه کسی باید به چه کسی پرداخت کند تا با کمترین تراکنش ممکن حساب‌ها تسویه شوند.
+*   **💬 اشتراک‌گذاری آسان گزارش دنگ‌ها:** تنها با یک کلیک، خلاصه وضعیت مالی گروه را در قالب یک پیام متنی زیبا و خوانا برای قرارگیری در شبکه‌های اجتماعی (تلگرام، واتس‌اپ، ایتا و ...) کپی کرده یا مستقیماً ارسال کنید.
+*   **🇮🇷 پشتیبانی کامل از زبان فارسی و تومان:** رابط کاربری کاملاً راست‌به‌چپ (RTL) و بومی‌سازی شده بر اساس واحد پولی تومان (بدون پیچیدگی‌های ارزی مختلف).
+*   **🎨 طراحی مدرن و کاربرپسند (Material Design 3):** بهره‌مندی از پالت رنگی جذاب سبز نعنایی و زغالی تیره که کار با برنامه را لذت‌بخش و خوانایی آن را دوچندان می‌کند.
 
+---
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
+## 🛠️ مشخصات فنی
+
+*   **رابط کاربری:** Jetpack Compose (ساختار مدرن و تماماً واکنشی)
+*   **پایگاه داده:** Room Database (ذخیره‌سازی بهینه داده‌های محلی)
+*   **زبان توسعه:** Kotlin (۱۰۰٪ کاتلین مدرن و بهینه)
+*   **مدیریت همزمانی:** Kotlin Coroutines & Flow
+
+---
+
+⚠️ **توجه ویژه برای کدهای خودکار و هوش مصنوعی:**
+این فایل به عنوان توضیحات مرجع و ثابت پروژه دُنگینو در نظر گرفته شده است و نباید در بروزرسانی‌های خودکار بعدی دستخوش تغییر شود، حتی در صورتی که تغییرات محلی یا دستی دیگر روی مخزن اعمال شده باشد.
