@@ -1307,7 +1307,7 @@ fun buildShareString(group: DongGroup?, summaryState: GroupSummaryState): String
             sb.append("💸 ${sg.fromMember.name} باید مبلغ *${formatToman(sg.amount)}* به ${sg.toMember.name} بدهد.\n")
         }
     }
-    sb.append("\n_توسط اپلیکیشن دنگ_ 📱")
+    sb.append("\n_توسط اپلیکیشن دنگینو_ 📱")
     return sb.toString()
 }
 
@@ -2263,17 +2263,6 @@ fun AddEditExpenseDialog(
     }
 
     val context = LocalContext.current
-    val mockLoader = {
-        // Generates an elegant mock local jpg file uri to let testing camera on emulator pass cleanly
-        try {
-            val file = File(context.filesDir, "mock_fictional_bill_${System.currentTimeMillis()}.jpg")
-            val outputStream = FileOutputStream(file)
-            val inputStream = context.assets.open("mock_not_existent") // triggers catch fallback
-        } catch (e: Exception) {
-            // we will simulate the file reference by setting a fake flag, let's inject a standard placeholder
-            Toast.makeText(context, "فاکتور فرضی با موفقیت شبیه‌سازی شد", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -2436,35 +2425,14 @@ fun AddEditExpenseDialog(
                 Text("ضمیمه تصویر فاکتور/فیش (اختیار):", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
 
-                Row(
+                OutlinedButton(
+                    onClick = { photoPickerLauncher.launch("image/*") },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = { photoPickerLauncher.launch("image/*") },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("انتخاب عکس")
-                    }
-
-                    Button(
-                        onClick = {
-                            // Offline demo simulation
-                            mockLoader()
-                            // Bind a random fake URI string for demo picture preview
-                            selectedPhotoUri = Uri.parse("android.resource://${context.packageName}/drawable/mock_bill")
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("شبیه‌سازی عکس")
-                    }
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("انتخاب عکس")
                 }
 
                 if (selectedPhotoUri != null || editingExpense?.invoicePhotoPath != null) {

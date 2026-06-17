@@ -16,8 +16,8 @@ android {
     applicationId = "com.aistudio.dong.gp"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.1"
+    versionCode = 5
+    versionName = "4.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
