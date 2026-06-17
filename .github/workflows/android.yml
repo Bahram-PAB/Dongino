@@ -7,7 +7,7 @@ on:
     branches: [ "main", "master" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -56,3 +56,32 @@ jobs:
 
       - name: Compile and Build Android Project
         run: ./gradlew assembleDebug --no-daemon --no-configuration-cache
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create and Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: نسخه جدید دنگ - بیلد شماره ${{ github.run_number }}
+          body: |
+            ### 🚀 تغییرات جدید برنامه دنگ (Dongino)
+            
+            نسخه جدید برنامه با موفقیت توسط سیستم یکپارچه‌سازی مداوم (GitHub Actions) بیلد شد و آماده استفاده است.
+            
+            **تغییرات و ویژگی‌های توسعه این نسخه:**
+            * 🛠️ رفع کامل خطای بیلد KSP و IntelliJ در سرورهای اوبونتو CI
+            * 🔐 شبیه‌سازی و بازنشانی امن فایل امضای دیجیتال (`debug.keystore`) به صورت ابری
+            * 📦 سبک‌سازی عملکرد کامپایلر جاوا و بهبود مدیریت حافظه دیمون گواستار
+            * 🇮🇷 حفظ کامل پوسته تماماً RTL و پشتیبانی از مبالغ به صورت **تومان**
+            
+            📥 **جهت نصب برنامه، فایل `app-debug.apk` را از بخش Assets (دارایی‌ها) در پایین صفحه دانلود کنید.**
+          draft: false
+          prerelease: false
+          files: app/build/outputs/apk/debug/app-debug.apk
+
