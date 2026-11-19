@@ -37,7 +37,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
@@ -124,6 +126,61 @@ fun parsePersianLong(str: String): Long? {
         }
     }.joinToString("")
     return englishDigits.toLongOrNull()
+}
+
+/**
+ * Formats a raw amount input with thousands separators while keeping the caret anchored
+ * to the digit the user is typing. This prevents the cursor from jumping backwards (and
+ * the value getting scrambled) when a separator is inserted as the digit count grows.
+ */
+private fun formatAmountField(newValue: TextFieldValue): TextFieldValue {
+    val raw = newValue.text
+    val cursor = newValue.selection.end.coerceIn(0, raw.length)
+    val digitsBeforeCursor = raw.take(cursor).count { it.isDigit() }
+
+    val digitsOnly = raw.filter { it.isDigit() }
+    if (digitsOnly.isEmpty()) {
+        return TextFieldValue("", selection = TextRange(0))
+    }
+
+    val longVal = parsePersianLong(digitsOnly) ?: return newValue
+    val formatted = NumberFormat.getIntegerInstance(Locale.US).format(longVal)
+
+    var newCursor = if (digitsBeforeCursor == 0) 0 else formatted.length
+    if (digitsBeforeCursor > 0) {
+        var seen = 0
+        for (i in formatted.indices) {
+            if (formatted[i].isDigit()) {
+                seen++
+                if (seen == digitsBeforeCursor) {
+                    newCursor = i + 1
+                    break
+                }
+            }
+        }
+    }
+
+    return TextFieldValue(formatted, selection = TextRange(newCursor))
+}
+
+@Composable
+private fun AmountInputField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    label: String,
+    testTag: String
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { onValueChange(formatAmountField(it)) },
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(testTag),
+        shape = RoundedCornerShape(10.dp),
+        singleLine = true
+    )
 }
 
 fun formatDate(timestamp: Long): String {
@@ -2333,10 +2390,12 @@ fun AddEditExpenseDialog(
     onSave: (Long, String, Int, List<Int>, String, Long, Uri?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val initialAmount = editingExpense?.amount?.let { amt ->
-        java.text.DecimalFormat("#,###").format(amt)
+    val initialAmountText = editingExpense?.amount?.let { amt ->
+        NumberFormat.getIntegerInstance(Locale.US).format(amt)
     } ?: ""
-    var amount by remember { mutableStateOf(initialAmount) }
+    var amountField by remember {
+        mutableStateOf(TextFieldValue(initialAmountText, selection = TextRange(initialAmountText.length)))
+    }
     var description by remember { mutableStateOf(editingExpense?.description ?: "") }
     var category by remember { mutableStateOf(editingExpense?.category ?: "غذا") }
     var paidByMemberId by remember { mutableStateOf(editingExpense?.paidByMemberId ?: (if (members.isNotEmpty()) members.first().id else -1)) }
@@ -2387,25 +2446,11 @@ fun AddEditExpenseDialog(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { input ->
-                        val digitOnly = input.filter { it.isDigit() || it == ',' || it == '٬' || it == '.' }
-                        val cleaned = digitOnly.replace(",", "").replace("٬", "").replace(".", "")
-                        val longVal = parsePersianLong(cleaned)
-                        if (longVal != null) {
-                            amount = java.text.DecimalFormat("#,###").format(longVal)
-                        } else if (cleaned.isEmpty()) {
-                            amount = ""
-                        }
-                    },
-                    label = { Text("مبلغ هزینه به تومان (عدد)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("expense_amount_input"),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                AmountInputField(
+                    value = amountField,
+                    onValueChange = { amountField = it },
+                    label = "مبلغ هزینه به تومان (عدد)",
+                    testTag = "expense_amount_input"
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -2585,7 +2630,7 @@ fun AddEditExpenseDialog(
                     }
                     Button(
                         onClick = {
-                            val cleanedAmount = amount.replace(",", "").replace("٬", "").replace(".", "")
+                            val cleanedAmount = amountField.text.filter { it.isDigit() }
                             val amt = parsePersianLong(cleanedAmount) ?: 0L
                             if (amt <= 0 || description.isBlank() || paidByMemberId == -1) {
                                 return@Button
@@ -2600,7 +2645,7 @@ fun AddEditExpenseDialog(
                                 selectedPhotoUri
                             )
                         },
-                        enabled = amount.isNotBlank() && description.isNotBlank(),
+                        enabled = amountField.text.isNotBlank() && description.isNotBlank(),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .weight(1f)
@@ -2620,7 +2665,7 @@ fun AddSettlementDialog(
     onSave: (Int, Int, Long) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var amount by remember { mutableStateOf("") }
+    var amountField by remember { mutableStateOf(TextFieldValue("")) }
     var fromMemberId by remember { mutableStateOf(if (members.isNotEmpty()) members.first().id else -1) }
     var toMemberId by remember { mutableStateOf(if (members.size > 1) members[1].id else -1) }
 
@@ -2645,25 +2690,11 @@ fun AddSettlementDialog(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { input ->
-                        val digitOnly = input.filter { it.isDigit() || it == ',' || it == '٬' || it == '.' }
-                        val cleaned = digitOnly.replace(",", "").replace("٬", "").replace(".", "")
-                        val longVal = parsePersianLong(cleaned)
-                        if (longVal != null) {
-                            amount = java.text.DecimalFormat("#,###").format(longVal)
-                        } else if (cleaned.isEmpty()) {
-                            amount = ""
-                        }
-                    },
-                    label = { Text("مبلغ تسویه شده به تومان") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("settlement_amount_input"),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true
+                AmountInputField(
+                    value = amountField,
+                    onValueChange = { amountField = it },
+                    label = "مبلغ تسویه شده به تومان",
+                    testTag = "settlement_amount_input"
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -2721,14 +2752,14 @@ fun AddSettlementDialog(
                     }
                     Button(
                         onClick = {
-                            val cleanedAmount = amount.replace(",", "").replace("٬", "").replace(".", "")
+                            val cleanedAmount = amountField.text.filter { it.isDigit() }
                             val amt = parsePersianLong(cleanedAmount) ?: 0L
                             if (amt <= 0 || fromMemberId == -1 || toMemberId == -1 || fromMemberId == toMemberId) {
                                 return@Button
                             }
                             onSave(fromMemberId, toMemberId, amt)
                         },
-                        enabled = amount.isNotBlank() && fromMemberId != toMemberId,
+                        enabled = amountField.text.isNotBlank() && fromMemberId != toMemberId,
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .weight(1f)
