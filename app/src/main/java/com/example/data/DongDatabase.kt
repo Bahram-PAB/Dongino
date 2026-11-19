@@ -19,18 +19,20 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 abstract class DongDatabase : RoomDatabase() {
     abstract fun dongDao(): DongDao
 
-    private val sRoomDatabaseCallback = object : RoomDatabase.Callback() {
-        override fun onOpen(db: SupportSQLiteDatabase) {
-            super.onOpen(db)
-            // Enable foreign key enforcement so CASCADE deletes declared in entities actually apply
-            // (Room leaves foreign keys OFF by default).
-            db.execSQL("PRAGMA foreign_keys = ON")
-        }
-    }
-
     companion object {
         @Volatile
         private var INSTANCE: DongDatabase? = null
+
+        // Must live in the companion object because getDatabase() (also in the companion)
+        // cannot access instance members of the enclosing class.
+        private val sRoomDatabaseCallback = object : RoomDatabase.Callback() {
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                // Enable foreign key enforcement so CASCADE deletes declared in entities actually apply
+                // (Room leaves foreign keys OFF by default).
+                db.execSQL("PRAGMA foreign_keys = ON")
+            }
+        }
 
         fun getDatabase(context: Context): DongDatabase {
             return INSTANCE ?: synchronized(this) {

@@ -1,6 +1,5 @@
 package com.example.data
 
-import com.example.data.*
 import kotlinx.coroutines.flow.Flow
 
 class DongRepository(private val dongDao: DongDao) {
