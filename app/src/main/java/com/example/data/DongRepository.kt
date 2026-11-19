@@ -1,5 +1,6 @@
 package com.example.data
 
+import com.example.data.*
 import kotlinx.coroutines.flow.Flow
 
 class DongRepository(private val dongDao: DongDao) {
@@ -22,6 +23,22 @@ class DongRepository(private val dongDao: DongDao) {
     suspend fun insertMember(member: GroupMember): Long = dongDao.insertMember(member)
 
     suspend fun deleteMember(member: GroupMember) = dongDao.deleteMember(member)
+
+    // Removes a member only if they are not referenced by any expense (as payer or beneficiary),
+    // preventing orphaned expense records and vanishing balances.
+    suspend fun removeMemberSafely(member: GroupMember): Boolean {
+        val expenses = dongDao.getExpensesByGroup(member.groupId)
+        val referenced = expenses.any { expense ->
+            expense.paidByMemberId == member.id ||
+                expense.beneficiaryMemberIds.split(",")
+                    .filter { it.isNotEmpty() }
+                    .mapNotNull { it.toIntOrNull() }
+                    .contains(member.id)
+        }
+        if (referenced) return false
+        dongDao.deleteMember(member)
+        return true
+    }
 
     // --- EXPENSES ---
     val allExpenses: Flow<List<Expense>> = dongDao.getAllExpensesFlow()

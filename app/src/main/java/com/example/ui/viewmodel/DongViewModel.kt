@@ -99,6 +99,14 @@ class DongViewModel(
             initialValue = emptyList()
         )
 
+    // One-shot error surface for member removal attempts blocked by data integrity.
+    private val _removeMemberError = MutableStateFlow<String?>(null)
+    val removeMemberError: StateFlow<String?> = _removeMemberError.asStateFlow()
+
+    fun clearRemoveMemberError() {
+        _removeMemberError.value = null
+    }
+
     // --- MAIN RETURNING STATE CONTROLLER FOR SUMMARY CARD, BALANCES AND SUGGESTIONS ---
     val groupSummaryState: StateFlow<GroupSummaryState> = combine(
         activeMembers,
@@ -110,6 +118,9 @@ class DongViewModel(
         val netBalances = members.associate { it.id to 0L }.toMutableMap()
 
         // 1. Compute costs from active expenses
+        // NOTE: Use integer division with remainder distribution so balances always sum to zero.
+        // Without distributing the remainder, `amount / n` truncates and the leftover Toman vanishes,
+        // breaking the balance invariant and the settlement pairing algorithm.
         for (expense in expenses) {
             val payer = expense.paidByMemberId
             val amount = expense.amount
@@ -127,14 +138,19 @@ class DongViewModel(
             }
 
             if (beneficiaries.isNotEmpty()) {
-                val portion = amount / beneficiaries.size
+                val n = beneficiaries.size
+                val portion = amount / n
+                val remainder = amount % n
 
-                // Increase credit of payer
+                // Payer is credited the full amount they paid out of pocket
                 netBalances[payer] = (netBalances[payer] ?: 0L) + amount
 
-                // Decrease credit of beneficiaries (they owe)
-                for (bId in beneficiaries) {
-                    netBalances[bId] = (netBalances[bId] ?: 0L) - portion
+                // Split the debt equally among beneficiaries; distribute any remainder
+                // (largest-remainder method) so total debt == amount and netBalances sum to 0.
+                for ((index, bId) in beneficiaries.withIndex()) {
+                    var debt = portion
+                    if (index < remainder) debt += 1
+                    netBalances[bId] = (netBalances[bId] ?: 0L) - debt
                 }
             }
         }
@@ -274,7 +290,10 @@ class DongViewModel(
 
     fun removeMember(member: GroupMember) {
         viewModelScope.launch {
-            repository.deleteMember(member)
+            val ok = repository.removeMemberSafely(member)
+            if (!ok) {
+                _removeMemberError.value = "«${member.name}» دارای هزینه ثبت‌شده است، بنابراین قابل حذف نیست."
+            }
         }
     }
 

@@ -924,6 +924,15 @@ fun GroupDashboardScreen(viewModel: DongViewModel) {
 
     var showAddMemberDialog by remember { mutableStateOf(false) }
 
+    val removeMemberError by viewModel.removeMemberError.collectAsStateWithLifecycle()
+
+    LaunchedEffect(removeMemberError) {
+        if (removeMemberError != null) {
+            Toast.makeText(context, removeMemberError, Toast.LENGTH_LONG).show()
+            viewModel.clearRemoveMemberError()
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

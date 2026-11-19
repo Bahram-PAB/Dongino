@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -18,6 +19,15 @@ import androidx.room.RoomDatabase
 abstract class DongDatabase : RoomDatabase() {
     abstract fun dongDao(): DongDao
 
+    private val sRoomDatabaseCallback = object : RoomDatabase.Callback() {
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            // Enable foreign key enforcement so CASCADE deletes declared in entities actually apply
+            // (Room leaves foreign keys OFF by default).
+            db.execSQL("PRAGMA foreign_keys = ON")
+        }
+    }
+
     companion object {
         @Volatile
         private var INSTANCE: DongDatabase? = null
@@ -29,6 +39,7 @@ abstract class DongDatabase : RoomDatabase() {
                     DongDatabase::class.java,
                     "dong_database"
                 )
+                .addCallback(sRoomDatabaseCallback)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
